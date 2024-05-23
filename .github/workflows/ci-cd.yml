@@ -1,0 +1,63 @@
+name: user-management
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        # Checks out the repository code so subsequent steps can access it.
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+        # Sets up Node.js version 14 to use for installing dependencies and running tests.
+
+      - name: Install dependencies
+        run: npm install
+        # Installs project dependencies required to run the application.
+
+      - name: Build Docker image
+        run: docker build -t yourusername/your-app:${{ github.sha }} .
+        # Builds a Docker image with a tag that includes the unique commit SHA.
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        # Logs in to Docker Hub using credentials stored in GitHub secrets.
+
+      - name: Push Docker image
+        run: docker push yourusername/your-app:${{ github.sha }}
+        # Pushes the built Docker image to Docker Hub.
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        # Checks out the repository code for the deploy job.
+
+      - name: Install SSH key
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        # Installs the SSH private key for secure connection to the EC2 instance.
+
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          docker-compose pull app
+          docker-compose up -d
+          EOF
+        # Connects to the EC2 instance via SSH and deploys the new Docker image.
