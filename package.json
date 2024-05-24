@@ -4,12 +4,13 @@
   "description": "",
   "main": "src/server.js",
   "scripts": {
-    "test": "jest"
+    "test": "cross-env NODE_ENV=test jest --setupFiles dotenv/config"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.20.2",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "mongoose": "^8.4.0"
